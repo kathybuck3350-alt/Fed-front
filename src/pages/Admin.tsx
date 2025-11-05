@@ -8,678 +8,892 @@ import { toast } from "sonner";
 import { Trash2, Plus, LogOut, Eye, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 // API base URL - replace with your Node.js backend URL
 const API_BASE_URL = "https://fed-bank.vercel.app/api";
 
 interface Shipment {
-  id: string;
-  tracking_id: string;
-  service_type: string;
-  origin: string;
-  destination: string;
-  estimated_delivery: string;
-  shipment_value: number;
-  current_location: string;
-  customs_status: string;
-  status: string;
-  progress: any[];
+  id: string;
+  tracking_id: string;
+  service_type: string;
+  origin: string;
+  destination: string;
+  estimated_delivery: string;
+  shipment_value: number;
+  current_location: string;
+  customs_status: string;
+  status: string;
+  progress: any[];
 }
 
 interface ProgressStep {
-  title: string;
-  description: string;
-  location: string;
-  timestamp: string;
-  completed: boolean;
+  title: string;
+  description: string;
+  location: string;
+  timestamp: string;
+  completed: boolean;
 }
 
 const Admin = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const shipmentsPerPage = 10;
-  const [formData, setFormData] = useState({
-    serviceType: "",
-    origin: "",
-    destination: "",
-    estimatedDelivery: "",
-    shipmentValue: "",
-    currentLocation: "",
-    customsStatus: "On Hold",
-  });
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [viewShipment, setViewShipment] = useState<Shipment | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const shipmentsPerPage = 10;
+  
+  // State for creating a new shipment
+  const [formData, setFormData] = useState({
+    serviceType: "",
+    origin: "",
+    destination: "",
+    estimatedDelivery: "",
+    shipmentValue: "",
+    currentLocation: "",
+    customsStatus: "On Hold",
+  });
+  
+  // State for viewing a shipment
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [viewShipment, setViewShipment] = useState<Shipment | null>(null);
 
+  // State for editing a shipment
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editShipmentId, setEditShipmentId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    serviceType: "",
+    origin: "",
+    destination: "",
+    estimatedDelivery: "",
+    shipmentValue: "",
+    currentLocation: "",
+    customsStatus: "",
+    status: "",
+  });
 
-  // Progress update state
-  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
-  const [isProgressDialogOpen, setIsProgressDialogOpen] = useState(false);
-  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
-  const [newProgress, setNewProgress] = useState({
-    title: "",
-    description: "",
-    location: "",
-    completed: false,
-  });
+  // State for updating progress
+  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  const [isProgressDialogOpen, setIsProgressDialogOpen] = useState(false);
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
+  const [newProgress, setNewProgress] = useState({
+    title: "",
+    description: "",
+    location: "",
+    completed: false,
+  });
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchShipments();
-    }
-  }, [isLoggedIn]);
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchShipments();
+    }
+  }, [isLoggedIn]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    if (username === "vico" && password === "vic1404174") {
-      setIsLoggedIn(true);
-      toast.success("Login successful!");
-    } else {
-      toast.error("Invalid credentials");
-    }
-  };
+    // Hardcoded credentials for local admin panel access
+    if (username === "vico" && password === "vic1404174") {
+      setIsLoggedIn(true);
+      toast.success("Login successful!");
+    } else {
+      toast.error("Invalid credentials");
+    }
+  };
 
-  const generateTrackingId = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const random = Math.floor(Math.random() * 1000);
-    return `SCS-${year}${month}${day}-${random}`;
-  };
+  const generateTrackingId = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const random = Math.floor(Math.random() * 1000);
+    return `SCS-${year}${month}${day}-${random}`;
+  };
 
-  const fetchShipments = async (page: number = 1) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/shipments?page=${page}&limit=${shipmentsPerPage}`);
+  const fetchShipments = async (page: number = 1) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/shipments?page=${page}&limit=${shipmentsPerPage}`);
 
-      if (!response.ok) {
-        toast.error("Error fetching shipments");
-        return;
-      }
+      if (!response.ok) {
+        toast.error("Error fetching shipments");
+        return;
+      }
 
-      const data = await response.json();
-      setShipments(data.shipments || []);
-      setTotalPages(Math.ceil(data.total / shipmentsPerPage));
-      setCurrentPage(page);
-    } catch (error) {
-      toast.error("Error fetching shipments");
-    }
-  };
+      const data = await response.json();
+      setShipments(data.shipments || []);
+      setTotalPages(Math.ceil(data.total / shipmentsPerPage));
+      setCurrentPage(page);
+    } catch (error) {
+      toast.error("Error fetching shipments");
+    }
+  };
 
-  const handleCreateShipment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateShipment = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    if (!formData.serviceType || !formData.origin || !formData.destination || !formData.estimatedDelivery || !formData.shipmentValue || !formData.currentLocation) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
+    if (!formData.serviceType || !formData.origin || !formData.destination || !formData.estimatedDelivery || !formData.shipmentValue || !formData.currentLocation) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
-    const trackingId = generateTrackingId();
-    const progress = [
-      {
-        title: "Package Received",
-        description: "Shipment received at origin facility",
-        location: formData.origin,
-        timestamp: new Date().toISOString(),
-        completed: true,
-      },
-      {
-        title: "In Transit",
-        description: "Package is on the way",
-        location: formData.currentLocation,
-        timestamp: new Date().toISOString(),
-        completed: true,
-      },
-      {
-        title: "Customs Clearance",
-        description: formData.customsStatus === "Cleared" ? "Package cleared customs" : "Package awaiting customs clearance",
-        location: formData.currentLocation,
-        timestamp: new Date().toISOString(),
-        completed: formData.customsStatus === "Cleared",
-      },
-      {
-        title: "Out for Delivery",
-        description: "Package will be delivered soon",
-        location: formData.destination.split(",")[0],
-        timestamp: null,
-        completed: false,
-      },
-    ];
+    const trackingId = generateTrackingId();
+    // Initial progress steps
+    const progress = [
+      {
+        title: "Package Received",
+        description: "Shipment received at origin facility",
+        location: formData.origin,
+        timestamp: new Date().toISOString(),
+        completed: true,
+      },
+      {
+        title: "In Transit",
+        description: "Package is on the way",
+        location: formData.currentLocation,
+        timestamp: new Date().toISOString(),
+        completed: true,
+      },
+      {
+        title: "Customs Clearance",
+        description: formData.customsStatus === "Cleared" ? "Package cleared customs" : "Package awaiting customs clearance",
+        location: formData.currentLocation,
+        timestamp: new Date().toISOString(),
+        completed: formData.customsStatus === "Cleared",
+      },
+      {
+        title: "Out for Delivery",
+        description: "Package will be delivered soon",
+        location: formData.destination.split(",")[0],
+        timestamp: null,
+        completed: false,
+      },
+    ];
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/shipments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tracking_id: trackingId,
-          service_type: formData.serviceType,
-          origin: formData.origin,
-          destination: formData.destination,
-          estimated_delivery: formData.estimatedDelivery,
-          shipment_value: parseFloat(formData.shipmentValue),
-          current_location: formData.currentLocation,
-          customs_status: formData.customsStatus,
-          status: "In Transit",
-          progress,
-        }),
-      });
+    try {
+      const response = await fetch(`${API_BASE_URL}/shipments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tracking_id: trackingId,
+          service_type: formData.serviceType,
+          origin: formData.origin,
+          destination: formData.destination,
+          estimated_delivery: formData.estimatedDelivery,
+          shipment_value: parseFloat(formData.shipmentValue),
+          current_location: formData.currentLocation,
+          customs_status: formData.customsStatus,
+          status: "In Transit",
+          progress,
+        }),
+      });
 
-      if (!response.ok) {
-        toast.error("Error creating shipment");
-      } else {
-        toast.success(`Shipment created! Tracking ID: ${trackingId}`);
-        setFormData({
-          serviceType: "",
-          origin: "",
-          destination: "",
-          estimatedDelivery: "",
-          shipmentValue: "",
-          currentLocation: "",
-          customsStatus: "On Hold",
-        });
-        fetchShipments(currentPage);
-      }
-    } catch (error) {
-      toast.error("Error creating shipment");
-    }
-  };
+      if (!response.ok) {
+        toast.error("Error creating shipment");
+      } else {
+        toast.success(`Shipment created! Tracking ID: ${trackingId}`);
+        // Reset form
+        setFormData({
+          serviceType: "",
+          origin: "",
+          destination: "",
+          estimatedDelivery: "",
+          shipmentValue: "",
+          currentLocation: "",
+          customsStatus: "On Hold",
+        });
+        fetchShipments(currentPage);
+      }
+    } catch (error) {
+      toast.error("Error creating shipment");
+    }
+  };
 
-  const handleDeleteShipment = async (id: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/shipments/${id}`, {
-        method: "DELETE",
-      });
+  const handleDeleteShipment = async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/shipments/${id}`, {
+        method: "DELETE",
+      });
 
-      if (!response.ok) {
-        toast.error("Error deleting shipment");
-      } else {
-        toast.success("Shipment deleted");
-        fetchShipments(currentPage);
-      }
-    } catch (error) {
-      toast.error("Error deleting shipment");
-    }
-  };
+      if (!response.ok) {
+        toast.error("Error deleting shipment");
+      } else {
+        toast.success("Shipment deleted");
+        fetchShipments(currentPage);
+      }
+    } catch (error) {
+      toast.error("Error deleting shipment");
+    }
+  };
 
-  const handleViewShipment = (shipment: Shipment) => {
-    setViewShipment(shipment);
-    setIsViewDialogOpen(true);
-  };
+  const handleViewShipment = (shipment: Shipment) => {
+    setViewShipment(shipment);
+    setIsViewDialogOpen(true);
+  };
+  
+  const openEditDialog = (shipment: Shipment) => {
+    setEditShipmentId(shipment.id);
+    setEditFormData({
+      serviceType: shipment.service_type,
+      origin: shipment.origin,
+      destination: shipment.destination,
+      estimatedDelivery: shipment.estimated_delivery,
+      shipmentValue: String(shipment.shipment_value),
+      currentLocation: shipment.current_location,
+      customsStatus: shipment.customs_status,
+      status: shipment.status,
+    });
+    setIsEditDialogOpen(true);
+  };
 
+  const handleUpdateShipment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editShipmentId) return;
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchShipments(newPage);
-    }
-  };
+    if (!editFormData.serviceType || !editFormData.origin || !editFormData.destination || !editFormData.estimatedDelivery || !editFormData.shipmentValue || !editFormData.currentLocation || !editFormData.status || !editFormData.customsStatus) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
-  const openProgressDialog = (shipment: Shipment) => {
-    setSelectedShipment(shipment);
-    setProgressSteps(shipment.progress || []);
-    setIsProgressDialogOpen(true);
-  };
+    try {
+      const response = await fetch(`${API_BASE_URL}/shipments/${editShipmentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_type: editFormData.serviceType,
+          origin: editFormData.origin,
+          destination: editFormData.destination,
+          estimated_delivery: editFormData.estimatedDelivery,
+          shipment_value: parseFloat(editFormData.shipmentValue),
+          current_location: editFormData.currentLocation,
+          customs_status: editFormData.customsStatus,
+          status: editFormData.status,
+        }),
+      });
 
-  const handleAddProgressStep = () => {
-    if (!newProgress.title || !newProgress.description || !newProgress.location) {
-      toast.error("Please fill in all progress fields");
-      return;
-    }
+      if (!response.ok) {
+        toast.error("Error updating shipment");
+      } else {
+        toast.success(`Shipment ${editShipmentId} updated!`);
+        setIsEditDialogOpen(false);
+        fetchShipments(currentPage);
+      }
+    } catch (error) {
+      toast.error("Error updating shipment");
+    }
+  };
 
-    const step: ProgressStep = {
-      ...newProgress,
-      timestamp: new Date().toISOString(),
-    };
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchShipments(newPage);
+    }
+  };
 
-    setProgressSteps([...progressSteps, step]);
-    setNewProgress({
-      title: "",
-      description: "",
-      location: "",
-      completed: false,
-    });
-    toast.success("Progress step added");
-  };
+  const openProgressDialog = (shipment: Shipment) => {
+    setSelectedShipment(shipment);
+    setProgressSteps(shipment.progress || []);
+    setIsProgressDialogOpen(true);
+  };
 
-  const handleRemoveProgressStep = (index: number) => {
-    const updated = progressSteps.filter((_, i) => i !== index);
-    setProgressSteps(updated);
-    toast.success("Progress step removed");
-  };
+  const handleAddProgressStep = () => {
+    if (!newProgress.title || !newProgress.description || !newProgress.location) {
+      toast.error("Please fill in all progress fields");
+      return;
+    }
 
-  const handleToggleProgressComplete = (index: number) => {
-    const updated = [...progressSteps];
-    updated[index].completed = !updated[index].completed;
-    setProgressSteps(updated);
-  };
+    const step: ProgressStep = {
+      ...newProgress,
+      timestamp: new Date().toISOString(),
+    };
 
-  const handleUpdateProgress = async () => {
-    if (!selectedShipment) return;
+    setProgressSteps([...progressSteps, step]);
+    setNewProgress({
+      title: "",
+      description: "",
+      location: "",
+      completed: false,
+    });
+    toast.success("Progress step added");
+  };
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/shipments/${selectedShipment.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          progress: progressSteps,
-          current_location: progressSteps[progressSteps.length - 1]?.location || selectedShipment.current_location,
-        }),
-      });
+  const handleRemoveProgressStep = (index: number) => {
+    const updated = progressSteps.filter((_, i) => i !== index);
+    setProgressSteps(updated);
+    toast.success("Progress step removed");
+  };
 
-      if (!response.ok) {
-        toast.error("Error updating shipment progress");
-      } else {
-        toast.success("Shipment progress updated!");
-        setIsProgressDialogOpen(false);
-        fetchShipments(currentPage);
-      }
-    } catch (error) {
-      toast.error("Error updating shipment progress");
-    }
-  };
+  const handleToggleProgressComplete = (index: number) => {
+    const updated = [...progressSteps];
+    updated[index].completed = !updated[index].completed;
+    setProgressSteps(updated);
+  };
 
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="vico"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Login
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleUpdateProgress = async () => {
+    if (!selectedShipment) return;
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">FedEx Ship Center</h1>
-          <Button variant="outline" onClick={() => setIsLoggedIn(false)}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-        </div>
-      </div>
+    try {
+      const response = await fetch(`${API_BASE_URL}/shipments/${selectedShipment.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          progress: progressSteps,
+          // Update current location to the location of the latest step
+          current_location: progressSteps[progressSteps.length - 1]?.location || selectedShipment.current_location,
+        }),
+      });
 
-      <main className="py-8">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8">Admin Panel</h2>
+      if (!response.ok) {
+        toast.error("Error updating shipment progress");
+      } else {
+        toast.success("Shipment progress updated!");
+        setIsProgressDialogOpen(false);
+        fetchShipments(currentPage);
+      }
+    } catch (error) {
+      toast.error("Error updating shipment progress");
+    }
+  };
 
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Create New Shipment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateShipment} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="serviceType">Service Type</Label>
-                    <Select
-                      value={formData.serviceType}
-                      onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select service" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Standard">Standard</SelectItem>
-                        <SelectItem value="Express">Express</SelectItem>
-                        <SelectItem value="Premium">Premium</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="vico"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Login
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-                  <div>
-                    <Label htmlFor="origin">Origin</Label>
-                    <Input
-                      id="origin"
-                      value={formData.origin}
-                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                      placeholder="e.g., New York, USA"
-                      required
-                    />
-                  </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">FedEx Ship Center</h1>
+          <Button variant="outline" onClick={() => setIsLoggedIn(false)}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </div>
 
-                  <div>
-                    <Label htmlFor="destination">Destination</Label>
-                    <Input
-                      id="destination"
-                      value={formData.destination}
-                      onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                      placeholder="e.g., 123 Main St, Los Angeles, CA"
-                      required
-                    />
-                  </div>
+      <main className="py-8">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8">Admin Panel</h2>
 
-                  <div>
-                    <Label htmlFor="estimatedDelivery">Estimated Delivery</Label>
-                    <Input
-                      id="estimatedDelivery"
-                      type="date"
-                      value={formData.estimatedDelivery}
-                      onChange={(e) => setFormData({ ...formData, estimatedDelivery: e.target.value })}
-                      required
-                    />
-                  </div>
+          {/* Create New Shipment Card */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Create New Shipment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreateShipment} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="serviceType">Service Type</Label>
+                    <Select
+                      value={formData.serviceType}
+                      onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select service" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Standard">Standard</SelectItem>
+                        <SelectItem value="Express">Express</SelectItem>
+                        <SelectItem value="Premium">Premium</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                  <div>
-                    <Label htmlFor="shipmentValue">Shipment Value (USDT)</Label>
-                    <Input
-                      id="shipmentValue"
-                      type="number"
-                      value={formData.shipmentValue}
-                      onChange={(e) => setFormData({ ...formData, shipmentValue: e.target.value })}
-                      placeholder="e.g., 10000"
-                      required
-                    />
-                  </div>
+                  <div>
+                    <Label htmlFor="origin">Origin</Label>
+                    <Input
+                      id="origin"
+                      value={formData.origin}
+                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                      placeholder="e.g., New York, USA"
+                      required
+                    />
+                  </div>
 
-                  <div>
-                    <Label htmlFor="currentLocation">Current Location</Label>
-                    <Input
-                      id="currentLocation"
-                      value={formData.currentLocation}
-                      onChange={(e) => setFormData({ ...formData, currentLocation: e.target.value })}
-                      placeholder="e.g., Kansas City, Missouri"
-                      required
-                    />
-                  </div>
+                  <div>
+                    <Label htmlFor="destination">Destination</Label>
+                    <Input
+                      id="destination"
+                      value={formData.destination}
+                      onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                      placeholder="e.g., 123 Main St, Los Angeles, CA"
+                      required
+                    />
+                  </div>
 
-                  <div>
-                    <Label htmlFor="customsStatus">Customs Status</Label>
-                    <Select
-                      value={formData.customsStatus}
-                      onValueChange={(value) => setFormData({ ...formData, customsStatus: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Cleared">Cleared</SelectItem>
-                        <SelectItem value="On Hold">On Hold</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                  <div>
+                    <Label htmlFor="estimatedDelivery">Estimated Delivery</Label>
+                    <Input
+                      id="estimatedDelivery"
+                      type="date"
+                      value={formData.estimatedDelivery}
+                      onChange={(e) => setFormData({ ...formData, estimatedDelivery: e.target.value })}
+                      required
+                    />
+                  </div>
 
-                <Button type="submit" className="w-full">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Shipment
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                  <div>
+                    <Label htmlFor="shipmentValue">Shipment Value (USDT)</Label>
+                    <Input
+                      id="shipmentValue"
+                      type="number"
+                      value={formData.shipmentValue}
+                      onChange={(e) => setFormData({ ...formData, shipmentValue: e.target.value })}
+                      placeholder="e.g., 10000"
+                      required
+                    />
+                  </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>All Shipments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {shipments.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No shipments yet</p>
-                ) : (
-                  <>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Tracking ID</TableHead>
-                            <TableHead>Origin</TableHead>
-                            <TableHead>Destination</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Value</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {shipments.map((shipment) => (
-                            <TableRow key={shipment.id}>
-                              <TableCell className="font-mono text-sm">{shipment.tracking_id}</TableCell>
-                              <TableCell className="text-sm">{shipment.origin}</TableCell>
-                              <TableCell className="text-sm max-w-[200px] truncate">{shipment.destination}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">{shipment.status}</Badge>
-                              </TableCell>
-                              <TableCell>${shipment.shipment_value.toLocaleString()}</TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openProgressDialog(shipment)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleViewShipment(shipment)}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteShipment(shipment.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                  <div>
+                    <Label htmlFor="currentLocation">Current Location</Label>
+                    <Input
+                      id="currentLocation"
+                      value={formData.currentLocation}
+                      onChange={(e) => setFormData({ ...formData, currentLocation: e.target.value })}
+                      placeholder="e.g., Kansas City, Missouri"
+                      required
+                    />
+                  </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-500">
-                        Page {currentPage} of {totalPages}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                        >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+                  <div>
+                    <Label htmlFor="customsStatus">Customs Status</Label>
+                    <Select
+                      value={formData.customsStatus}
+                      onValueChange={(value) => setFormData({ ...formData, customsStatus: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cleared">Cleared</SelectItem>
+                        <SelectItem value="On Hold">On Hold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-      {/* Progress Update Dialog */}
-      <Dialog open={isProgressDialogOpen} onOpenChange={setIsProgressDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Update Shipment Progress - {selectedShipment?.tracking_id}</DialogTitle>
-          </DialogHeader>
+                <Button type="submit" className="w-full">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Shipment
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-          <div className="space-y-6">
-            {/* Current Progress Steps */}
-            <div>
-              <h3 className="font-semibold mb-3">Current Progress</h3>
-              <div className="space-y-2">
-                {progressSteps.map((step, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                    <input
-                      type="checkbox"
-                      checked={step.completed}
-                      onChange={() => handleToggleProgressComplete(index)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">{step.title}</div>
-                      <div className="text-sm text-gray-600">{step.description}</div>
-                      <div className="text-xs text-gray-500 mt-1">📍 {step.location}</div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveProgressStep(index)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* All Shipments Table Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>All Shipments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {shipments.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No shipments yet</p>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Tracking ID</TableHead>
+                            <TableHead>Origin</TableHead>
+                            <TableHead>Destination</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Value</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {shipments.map((shipment) => (
+                            <TableRow key={shipment.id}>
+                              <TableCell className="font-mono text-sm">{shipment.tracking_id}</TableCell>
+                              <TableCell className="text-sm">{shipment.origin}</TableCell>
+                              <TableCell className="text-sm max-w-[200px] truncate">{shipment.destination}</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">{shipment.status}</Badge>
+                              </TableCell>
+                              <TableCell>${shipment.shipment_value.toLocaleString()}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {/* Button to open Edit Shipment Dialog (General info) */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditDialog(shipment)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  {/* Button to open Progress Update Dialog (Timeline) */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openProgressDialog(shipment)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  {/* Button to open View Shipment Dialog (Details) */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleViewShipment(shipment)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  {/* Button to Delete Shipment */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteShipment(shipment.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
 
-            {/* Add New Progress Step */}
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-3">Add New Progress Step</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label>Title</Label>
-                  <Input
-                    value={newProgress.title}
-                    onChange={(e) => setNewProgress({ ...newProgress, title: e.target.value })}
-                    placeholder="e.g., In Transit"
-                  />
-                </div>
-                <div>
-                  <Label>Description</Label>
-                  <Textarea
-                    value={newProgress.description}
-                    onChange={(e) => setNewProgress({ ...newProgress, description: e.target.value })}
-                    placeholder="e.g., In Transit to Next Facility November 3, 2025"
-                  />
-                </div>
-                <div>
-                  <Label>Location</Label>
-                  <Input
-                    value={newProgress.location}
-                    onChange={(e) => setNewProgress({ ...newProgress, location: e.target.value })}
-                    placeholder="e.g., Kansas City, Missouri – major trucking corridor toward Texas and Louisiana"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={newProgress.completed}
-                    onChange={(e) => setNewProgress({ ...newProgress, completed: e.target.checked })}
-                    id="completed"
-                  />
-                  <Label htmlFor="completed">Mark as completed</Label>
-                </div>
-                <Button onClick={handleAddProgressStep} className="w-full">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Progress Step
-                </Button>
-              </div>
-            </div>
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
 
-            {/* Save Button */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setIsProgressDialogOpen(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateProgress} className="flex-1">
-                Save Progress
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* --- */}
+      {/* Progress Update Dialog */}
+      {/* --- */}
+      <Dialog open={isProgressDialogOpen} onOpenChange={setIsProgressDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Update Shipment Progress - **{selectedShipment?.tracking_id}**</DialogTitle>
+          </DialogHeader>
 
-      {/* View Shipment Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Shipment Details</DialogTitle>
-          </DialogHeader>
+          <div className="space-y-6">
+            {/* Current Progress Steps */}
+            <div>
+              <h3 className="font-semibold mb-3">Current Progress</h3>
+              <div className="space-y-2">
+                {progressSteps.map((step, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={step.completed}
+                      onChange={() => handleToggleProgressComplete(index)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">{step.title}</div>
+                      <div className="text-sm text-gray-600">{step.description}</div>
+                      <div className="text-xs text-gray-500 mt-1">📍 {step.location}</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveProgressStep(index)}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          {viewShipment ? (
-            <div className="space-y-3 text-sm">
-              <div><strong>Tracking ID:</strong> {viewShipment.tracking_id}</div>
-              <div><strong>Service Type:</strong> {viewShipment.service_type}</div>
-              <div><strong>Origin:</strong> {viewShipment.origin}</div>
-              <div><strong>Destination:</strong> {viewShipment.destination}</div>
-              <div><strong>Estimated Delivery:</strong> {viewShipment.estimated_delivery}</div>
-              <div><strong>Shipment Value:</strong> ${viewShipment.shipment_value.toLocaleString()}</div>
-              <div><strong>Current Location:</strong> {viewShipment.current_location}</div>
-              <div><strong>Customs Status:</strong> {viewShipment.customs_status}</div>
-              <div><strong>Status:</strong> {viewShipment.status}</div>
+            {/* Add New Progress Step */}
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3">Add New Progress Step</h3>
+              <div className="space-y-3">
+                <div>
+                  <Label>Title</Label>
+                  <Input
+                    value={newProgress.title}
+                    onChange={(e) => setNewProgress({ ...newProgress, title: e.target.value })}
+                    placeholder="e.g., In Transit"
+                  />
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea
+                    value={newProgress.description}
+                    onChange={(e) => setNewProgress({ ...newProgress, description: e.target.value })}
+                    placeholder="e.g., In Transit to Next Facility November 3, 2025"
+                  />
+                </div>
+                <div>
+                  <Label>Location</Label>
+                  <Input
+                    value={newProgress.location}
+                    onChange={(e) => setNewProgress({ ...newProgress, location: e.target.value })}
+                    placeholder="e.g., Kansas City, Missouri – major trucking corridor toward Texas and Louisiana"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={newProgress.completed}
+                    onChange={(e) => setNewProgress({ ...newProgress, completed: e.target.checked })}
+                    id="completed"
+                  />
+                  <Label htmlFor="completed">Mark as completed</Label>
+                </div>
+                <Button onClick={handleAddProgressStep} className="w-full">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Progress Step
+                </Button>
+              </div>
+            </div>
 
-              <div className="pt-2">
-                <strong>Progress:</strong>
-                <ul className="mt-1 list-disc list-inside text-gray-600">
-                  {viewShipment.progress.map((step, index) => (
-                    <li key={index}>
-                      <span className="font-medium">{step.title}</span> — {step.location}
-                      {step.completed && <span className="text-green-600 ml-1">(Completed)</span>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/* Save Button */}
+            <div className="flex gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setIsProgressDialogOpen(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateProgress} className="flex-1">
+                Save Progress
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-              <div className="pt-4 text-right">
-                <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p>No shipment selected.</p>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+      {/* --- */}
+      {/* Edit Shipment Dialog (General Details) */}
+      {/* --- */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Shipment - **{editFormData.origin} to {editFormData.destination}**</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateShipment} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editServiceType">Service Type</Label>
+                <Select
+                  value={editFormData.serviceType}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, serviceType: value })}
+                >
+                  <SelectTrigger id="editServiceType">
+                    <SelectValue placeholder="Select service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Standard">Standard</SelectItem>
+                    <SelectItem value="Express">Express</SelectItem>
+                    <SelectItem value="Premium">Premium</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="editOrigin">Origin</Label>
+                <Input
+                  id="editOrigin"
+                  value={editFormData.origin}
+                  onChange={(e) => setEditFormData({ ...editFormData, origin: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="editDestination">Destination</Label>
+                <Input
+                  id="editDestination"
+                  value={editFormData.destination}
+                  onChange={(e) => setEditFormData({ ...editFormData, destination: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="editEstimatedDelivery">Estimated Delivery</Label>
+                <Input
+                  id="editEstimatedDelivery"
+                  type="date"
+                  value={editFormData.estimatedDelivery}
+                  onChange={(e) => setEditFormData({ ...editFormData, estimatedDelivery: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="editShipmentValue">Shipment Value (USDT)</Label>
+                <Input
+                  id="editShipmentValue"
+                  type="number"
+                  value={editFormData.shipmentValue}
+                  onChange={(e) => setEditFormData({ ...editFormData, shipmentValue: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="editCurrentLocation">Current Location</Label>
+                <Input
+                  id="editCurrentLocation"
+                  value={editFormData.currentLocation}
+                  onChange={(e) => setEditFormData({ ...editFormData, currentLocation: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="editCustomsStatus">Customs Status</Label>
+                <Select
+                  value={editFormData.customsStatus}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, customsStatus: value })}
+                >
+                  <SelectTrigger id="editCustomsStatus">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cleared">Cleared</SelectItem>
+                    <SelectItem value="On Hold">On Hold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="editStatus">Status</Label>
+                <Select
+                  value={editFormData.status}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, status: value })}
+                >
+                  <SelectTrigger id="editStatus">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="In Transit">In Transit</SelectItem>
+                    <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
+                    <SelectItem value="Delivered">Delivered</SelectItem>
+                    <SelectItem value="Exception">Exception</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full">
+              <Edit className="mr-2 h-4 w-4" />
+              **Save Shipment Details**
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- */}
+      {/* View Shipment Dialog (Read-only) */}
+      {/* --- */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Shipment Details</DialogTitle>
+          </DialogHeader>
+
+          {viewShipment ? (
+            <div className="space-y-3 text-sm">
+              <div>**Tracking ID:** {viewShipment.tracking_id}</div>
+              <div>**Service Type:** {viewShipment.service_type}</div>
+              <div>**Origin:** {viewShipment.origin}</div>
+              <div>**Destination:** {viewShipment.destination}</div>
+              <div>**Estimated Delivery:** {viewShipment.estimated_delivery}</div>
+              <div>**Shipment Value:** ${viewShipment.shipment_value.toLocaleString()}</div>
+              <div>**Current Location:** {viewShipment.current_location}</div>
+              <div>**Customs Status:** {viewShipment.customs_status}</div>
+              <div>**Status:** {viewShipment.status}</div>
+
+              <div className="pt-2">
+                **Progress History:**
+                <ul className="mt-1 list-disc list-inside text-gray-600">
+                  {viewShipment.progress.map((step, index) => (
+                    <li key={index}>
+                      <span className="font-medium">{step.title}</span> — {step.location}
+                      {step.completed && <span className="text-green-600 ml-1">(Completed)</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="pt-4 text-right">
+                <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p>No shipment selected.</p>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default Admin;
