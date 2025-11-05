@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Trash2, Plus, LogOut, Eye, Edit } from "lucide-react";
+import { Trash2, Plus, LogOut, Eye, Edit, Package, Activity } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 // API base URL - replace with your Node.js backend URL
@@ -62,7 +62,8 @@ const Admin = () => {
   const [totalPages, setTotalPages] = useState(1);
   const shipmentsPerPage = 10;
   
-  // State for creating a new shipment
+  // State for creating a new shipment (now in modal)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     serviceType: "Standard",
     origin: "",
@@ -177,6 +178,31 @@ const Admin = () => {
     }
   };
 
+  const resetFormData = () => {
+    setFormData({
+      serviceType: "Standard",
+      origin: "",
+      destination: "",
+      estimatedDelivery: "",
+      shipmentValue: "",
+      currentLocation: "",
+      customsStatus: "On Hold",
+      typeOfShipment: "",
+      weight: "",
+      product: "",
+      paymentMethod: "Sender",
+      receiverName: "",
+      receiverAddress1: "",
+      receiverAddress2: "",
+      receiverCity: "",
+      receiverState: "",
+      receiverZip: "",
+      receiverCountry: "",
+      receiverPhone: "",
+      receiverEmail: "",
+    });
+  };
+
   const handleCreateShipment = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -275,29 +301,9 @@ const Admin = () => {
       }
 
       toast.success(`Shipment created! Tracking ID: ${trackingId}`);
-      // Reset form
-      setFormData({
-        serviceType: "Standard",
-        origin: "",
-        destination: "",
-        estimatedDelivery: "",
-        shipmentValue: "",
-        currentLocation: "",
-        customsStatus: "On Hold",
-        typeOfShipment: "",
-        weight: "",
-        product: "",
-        paymentMethod: "Sender",
-        receiverName: "",
-        receiverAddress1: "",
-        receiverAddress2: "",
-        receiverCity: "",
-        receiverState: "",
-        receiverZip: "",
-        receiverCountry: "",
-        receiverPhone: "",
-        receiverEmail: "",
-      });
+      // Reset form and close modal
+      resetFormData();
+      setIsCreateDialogOpen(false);
       fetchShipments(currentPage);
     } catch (error) {
       toast.error("Error creating shipment");
@@ -563,283 +569,304 @@ const Admin = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8">Admin Panel</h2>
 
-          {/* Create New Shipment Card */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Create New Shipment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateShipment} className="space-y-6">
-                {/* Shipment Specifications Section */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Shipment Specifications</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="serviceType">Service Type</Label>
-                      <Select
-                        value={formData.serviceType}
-                        onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select service" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Standard">Standard</SelectItem>
-                          <SelectItem value="Express">Express</SelectItem>
-                          <SelectItem value="Premium">Premium</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="typeOfShipment">Type of Shipment *</Label>
-                      <Select
-                        value={formData.typeOfShipment}
-                        onValueChange={(value) => setFormData({ ...formData, typeOfShipment: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Document">Document</SelectItem>
-                          <SelectItem value="Package">Package</SelectItem>
-                          <SelectItem value="Freight">Freight</SelectItem>
-                          <SelectItem value="Parcel">Parcel</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="weight">Weight (kg) *</Label>
-                      <Input
-                        id="weight"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={formData.weight}
-                        onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                        placeholder="e.g., 2.5"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="product">Product Description *</Label>
-                      <Input
-                        id="product"
-                        value={formData.product}
-                        onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                        placeholder="e.g., Electronics, Documents"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="paymentMethod">Payment Method</Label>
-                      <Select
-                        value={formData.paymentMethod}
-                        onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Sender">Sender</SelectItem>
-                          <SelectItem value="Receiver">Receiver</SelectItem>
-                          <SelectItem value="Third Party">Third Party</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="shipmentValue">Shipment Value (USDT) *</Label>
-                      <Input
-                        id="shipmentValue"
-                        type="number"
-                        value={formData.shipmentValue}
-                        onChange={(e) => setFormData({ ...formData, shipmentValue: e.target.value })}
-                        placeholder="e.g., 10000"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Route Information Section */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Route Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="origin">Origin *</Label>
-                      <Input
-                        id="origin"
-                        value={formData.origin}
-                        onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                        placeholder="e.g., New York, USA"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="destination">Destination *</Label>
-                      <Input
-                        id="destination"
-                        value={formData.destination}
-                        onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                        placeholder="e.g., Los Angeles, USA"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="estimatedDelivery">Estimated Delivery *</Label>
-                      <Input
-                        id="estimatedDelivery"
-                        type="date"
-                        value={formData.estimatedDelivery}
-                        onChange={(e) => setFormData({ ...formData, estimatedDelivery: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="currentLocation">Current Location *</Label>
-                      <Input
-                        id="currentLocation"
-                        value={formData.currentLocation}
-                        onChange={(e) => setFormData({ ...formData, currentLocation: e.target.value })}
-                        placeholder="e.g., Kansas City, Missouri"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="customsStatus">Customs Status</Label>
-                      <Select
-                        value={formData.customsStatus}
-                        onValueChange={(value) => setFormData({ ...formData, customsStatus: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Cleared">Cleared</SelectItem>
-                          <SelectItem value="On Hold">On Hold</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Receiver Details Section */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Receiver Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="receiverName">Full Name *</Label>
-                      <Input
-                        id="receiverName"
-                        value={formData.receiverName}
-                        onChange={(e) => setFormData({ ...formData, receiverName: e.target.value })}
-                        placeholder="e.g., John Doe"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverAddress1">Address Line 1 *</Label>
-                      <Input
-                        id="receiverAddress1"
-                        value={formData.receiverAddress1}
-                        onChange={(e) => setFormData({ ...formData, receiverAddress1: e.target.value })}
-                        placeholder="e.g., 123 Main Street"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverAddress2">Address Line 2</Label>
-                      <Input
-                        id="receiverAddress2"
-                        value={formData.receiverAddress2}
-                        onChange={(e) => setFormData({ ...formData, receiverAddress2: e.target.value })}
-                        placeholder="e.g., Apt 4B"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverCity">City *</Label>
-                      <Input
-                        id="receiverCity"
-                        value={formData.receiverCity}
-                        onChange={(e) => setFormData({ ...formData, receiverCity: e.target.value })}
-                        placeholder="e.g., Los Angeles"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverState">State/Province</Label>
-                      <Input
-                        id="receiverState"
-                        value={formData.receiverState}
-                        onChange={(e) => setFormData({ ...formData, receiverState: e.target.value })}
-                        placeholder="e.g., California"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverZip">ZIP/Postal Code *</Label>
-                      <Input
-                        id="receiverZip"
-                        value={formData.receiverZip}
-                        onChange={(e) => setFormData({ ...formData, receiverZip: e.target.value })}
-                        placeholder="e.g., 90001"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverCountry">Country *</Label>
-                      <Input
-                        id="receiverCountry"
-                        value={formData.receiverCountry}
-                        onChange={(e) => setFormData({ ...formData, receiverCountry: e.target.value })}
-                        placeholder="e.g., United States"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverPhone">Phone</Label>
-                      <Input
-                        id="receiverPhone"
-                        value={formData.receiverPhone}
-                        onChange={(e) => setFormData({ ...formData, receiverPhone: e.target.value })}
-                        placeholder="e.g., +1 234 567 8900"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="receiverEmail">Email</Label>
-                      <Input
-                        id="receiverEmail"
-                        type="email"
-                        value={formData.receiverEmail}
-                        onChange={(e) => setFormData({ ...formData, receiverEmail: e.target.value })}
-                        placeholder="e.g., john@example.com"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full">
+          {/* Add Shipment Button and Modal */}
+          <div className="mb-8">
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Shipment
+                  Add Shipment
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Shipment</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateShipment} className="space-y-6">
+                  {/* Shipment Specifications Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Shipment Specifications</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="serviceType">Service Type</Label>
+                        <Select
+                          value={formData.serviceType}
+                          onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select service" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Standard">Standard</SelectItem>
+                            <SelectItem value="Express">Express</SelectItem>
+                            <SelectItem value="Premium">Premium</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="typeOfShipment">Type of Shipment *</Label>
+                        <Select
+                          value={formData.typeOfShipment}
+                          onValueChange={(value) => setFormData({ ...formData, typeOfShipment: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Document">Document</SelectItem>
+                            <SelectItem value="Package">Package</SelectItem>
+                            <SelectItem value="Freight">Freight</SelectItem>
+                            <SelectItem value="Parcel">Parcel</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="weight">Weight (kg) *</Label>
+                        <Input
+                          id="weight"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={formData.weight}
+                          onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                          placeholder="e.g., 2.5"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="product">Product Description *</Label>
+                        <Input
+                          id="product"
+                          value={formData.product}
+                          onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                          placeholder="e.g., Electronics, Documents"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="paymentMethod">Payment Method</Label>
+                        <Select
+                          value={formData.paymentMethod}
+                          onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Sender">Sender</SelectItem>
+                            <SelectItem value="Receiver">Receiver</SelectItem>
+                            <SelectItem value="Third Party">Third Party</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="shipmentValue">Shipment Value (USDT) *</Label>
+                        <Input
+                          id="shipmentValue"
+                          type="number"
+                          value={formData.shipmentValue}
+                          onChange={(e) => setFormData({ ...formData, shipmentValue: e.target.value })}
+                          placeholder="e.g., 10000"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Route Information Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Route Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="origin">Origin *</Label>
+                        <Input
+                          id="origin"
+                          value={formData.origin}
+                          onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                          placeholder="e.g., New York, USA"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="destination">Destination *</Label>
+                        <Input
+                          id="destination"
+                          value={formData.destination}
+                          onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                          placeholder="e.g., Los Angeles, USA"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="estimatedDelivery">Estimated Delivery *</Label>
+                        <Input
+                          id="estimatedDelivery"
+                          type="date"
+                          value={formData.estimatedDelivery}
+                          onChange={(e) => setFormData({ ...formData, estimatedDelivery: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="currentLocation">Current Location *</Label>
+                        <Input
+                          id="currentLocation"
+                          value={formData.currentLocation}
+                          onChange={(e) => setFormData({ ...formData, currentLocation: e.target.value })}
+                          placeholder="e.g., Kansas City, Missouri"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="customsStatus">Customs Status</Label>
+                        <Select
+                          value={formData.customsStatus}
+                          onValueChange={(value) => setFormData({ ...formData, customsStatus: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cleared">Cleared</SelectItem>
+                            <SelectItem value="On Hold">On Hold</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Receiver Details Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Receiver Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="receiverName">Full Name *</Label>
+                        <Input
+                          id="receiverName"
+                          value={formData.receiverName}
+                          onChange={(e) => setFormData({ ...formData, receiverName: e.target.value })}
+                          placeholder="e.g., John Doe"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverAddress1">Address Line 1 *</Label>
+                        <Input
+                          id="receiverAddress1"
+                          value={formData.receiverAddress1}
+                          onChange={(e) => setFormData({ ...formData, receiverAddress1: e.target.value })}
+                          placeholder="e.g., 123 Main Street"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverAddress2">Address Line 2</Label>
+                        <Input
+                          id="receiverAddress2"
+                          value={formData.receiverAddress2}
+                          onChange={(e) => setFormData({ ...formData, receiverAddress2: e.target.value })}
+                          placeholder="e.g., Apt 4B"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverCity">City *</Label>
+                        <Input
+                          id="receiverCity"
+                          value={formData.receiverCity}
+                          onChange={(e) => setFormData({ ...formData, receiverCity: e.target.value })}
+                          placeholder="e.g., Los Angeles"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverState">State/Province</Label>
+                        <Input
+                          id="receiverState"
+                          value={formData.receiverState}
+                          onChange={(e) => setFormData({ ...formData, receiverState: e.target.value })}
+                          placeholder="e.g., California"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverZip">ZIP/Postal Code *</Label>
+                        <Input
+                          id="receiverZip"
+                          value={formData.receiverZip}
+                          onChange={(e) => setFormData({ ...formData, receiverZip: e.target.value })}
+                          placeholder="e.g., 90001"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverCountry">Country *</Label>
+                        <Input
+                          id="receiverCountry"
+                          value={formData.receiverCountry}
+                          onChange={(e) => setFormData({ ...formData, receiverCountry: e.target.value })}
+                          placeholder="e.g., United States"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverPhone">Phone</Label>
+                        <Input
+                          id="receiverPhone"
+                          value={formData.receiverPhone}
+                          onChange={(e) => setFormData({ ...formData, receiverPhone: e.target.value })}
+                          placeholder="e.g., +1 234 567 8900"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="receiverEmail">Email</Label>
+                        <Input
+                          id="receiverEmail"
+                          type="email"
+                          value={formData.receiverEmail}
+                          onChange={(e) => setFormData({ ...formData, receiverEmail: e.target.value })}
+                          placeholder="e.g., john@example.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsCreateDialogOpen(false);
+                        resetFormData();
+                      }} 
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Shipment
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           {/* All Shipments Table Card */}
           <Card>
@@ -884,31 +911,39 @@ const Admin = () => {
                               <TableCell>${shipment.shipment_value.toLocaleString()}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-2">
+                                  {/* Edit Shipment Details Button */}
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => openEditDialog(shipment)}
+                                    title="Edit Shipment Details"
                                   >
-                                    <Edit className="h-4 w-4" />
+                                    <Package className="h-4 w-4" />
                                   </Button>
+                                  {/* Edit Progress Button */}
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => openProgressDialog(shipment)}
+                                    title="Edit Progress Activity"
                                   >
-                                    <Edit className="h-4 w-4" />
+                                    <Activity className="h-4 w-4" />
                                   </Button>
+                                  {/* View Shipment Button */}
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleViewShipment(shipment)}
+                                    title="View Details"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
+                                  {/* Delete Shipment Button */}
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDeleteShipment(shipment.id)}
+                                    title="Delete Shipment"
                                   >
                                     <Trash2 className="h-4 w-4 text-red-500" />
                                   </Button>
@@ -1317,42 +1352,47 @@ const Admin = () => {
             </div>
 
             <Button type="submit" className="w-full">
-              <Edit className="mr-2 h-4 w-4" />
+              <Package className="mr-2 h-4 w-4" />
               Save Shipment Details
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* View Shipment Dialog */}
+      {/* View Shipment Dialog - Now Scrollable */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Shipment Details</DialogTitle>
+            <DialogTitle>Shipment Details - {viewShipment?.tracking_id}</DialogTitle>
           </DialogHeader>
 
           {viewShipment ? (
-            <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-4">
-                <div><strong>Tracking ID:</strong> {viewShipment.tracking_id}</div>
-                <div><strong>Service Type:</strong> {viewShipment.service_type}</div>
-                <div><strong>Type of Shipment:</strong> {viewShipment.type_of_shipment}</div>
-                <div><strong>Weight:</strong> {viewShipment.weight} kg</div>
-                <div><strong>Product:</strong> {viewShipment.product}</div>
-                <div><strong>Payment Method:</strong> {viewShipment.payment_method}</div>
-                <div><strong>Origin:</strong> {viewShipment.origin}</div>
-                <div><strong>Destination:</strong> {viewShipment.destination}</div>
-                <div><strong>Estimated Delivery:</strong> {viewShipment.estimated_delivery}</div>
-                <div><strong>Shipment Value:</strong> ${viewShipment.shipment_value.toLocaleString()}</div>
-                <div><strong>Current Location:</strong> {viewShipment.current_location}</div>
-                <div><strong>Customs Status:</strong> {viewShipment.customs_status}</div>
-                <div><strong>Status:</strong> {viewShipment.status}</div>
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div><strong>Tracking ID:</strong> {viewShipment.tracking_id}</div>
+                  <div><strong>Service Type:</strong> {viewShipment.service_type}</div>
+                  <div><strong>Type of Shipment:</strong> {viewShipment.type_of_shipment}</div>
+                  <div><strong>Weight:</strong> {viewShipment.weight} kg</div>
+                  <div><strong>Product:</strong> {viewShipment.product}</div>
+                  <div><strong>Payment Method:</strong> {viewShipment.payment_method}</div>
+                </div>
+                <div className="space-y-3">
+                  <div><strong>Origin:</strong> {viewShipment.origin}</div>
+                  <div><strong>Destination:</strong> {viewShipment.destination}</div>
+                  <div><strong>Estimated Delivery:</strong> {viewShipment.estimated_delivery}</div>
+                  <div><strong>Shipment Value:</strong> ${viewShipment.shipment_value.toLocaleString()}</div>
+                  <div><strong>Current Location:</strong> {viewShipment.current_location}</div>
+                  <div><strong>Customs Status:</strong> {viewShipment.customs_status}</div>
+                  <div><strong>Status:</strong> {viewShipment.status}</div>
+                </div>
               </div>
 
               {/* Receiver Details */}
               <div className="border-t pt-4">
-                <h4 className="font-semibold mb-2">Receiver Details</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <h4 className="font-semibold mb-3 text-lg">Receiver Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div><strong>Name:</strong> {viewShipment.receiver_details.name}</div>
                   <div><strong>Address:</strong> {viewShipment.receiver_details.address_line1}</div>
                   {viewShipment.receiver_details.address_line2 && (
@@ -1373,21 +1413,37 @@ const Admin = () => {
                 </div>
               </div>
 
+              {/* Progress History */}
               <div className="border-t pt-4">
-                <strong>Progress History:</strong>
-                <ul className="mt-2 space-y-2">
+                <h4 className="font-semibold mb-3 text-lg">Progress History</h4>
+                <div className="space-y-3">
                   {viewShipment.progress.map((step, index) => (
-                    <li key={index} className="p-2 border rounded">
-                      <div className="font-medium">{step.title}</div>
-                      <div className="text-gray-600">{step.description}</div>
-                      <div className="text-xs text-gray-500">📍 {step.location}</div>
-                      {step.completed && <span className="text-green-600 text-xs">(Completed)</span>}
-                    </li>
+                    <div key={index} className="p-3 border rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-3 h-3 rounded-full ${step.completed ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                        <div className="font-medium">{step.title}</div>
+                        {step.completed && (
+                          <Badge variant="outline" className="text-green-600 border-green-200">
+                            Completed
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-gray-600 text-sm mb-1">{step.description}</div>
+                      <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <span>📍</span>
+                        {step.location}
+                      </div>
+                      {step.timestamp && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(step.timestamp).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
 
-              <div className="pt-4 text-right">
+              <div className="pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
                   Close
                 </Button>
