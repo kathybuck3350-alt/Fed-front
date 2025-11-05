@@ -48,9 +48,9 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Contact Info</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
-              <li>WhatsApp: +(931)677-2299</li>
-              <li className="break-all">Email: official.FedEx.company8@gmail.com</li>
-              <li>California, USA CA 90011</li>
+              <li>WhatsApp: +(940)399-3899</li>
+              <li className="break-all">Email: fedexshipcenterchat@gmail.com</li>
+              <li>5601 Mark IV Pkwy, Fort Worth, TX76131, United States</li>
             </ul>
           </div>
         </div>

@@ -468,11 +468,11 @@ const Track = () => {
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-2 text-sm">
                             <Phone className="h-4 w-4 text-primary" />
-                            <span>+(931)677-2299</span>
+                            <span>+(940)399-3899</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Mail className="h-4 w-4 text-primary" />
-                            <span className="break-all">official.FedEx.company8@gmail.com</span>
+                            <span className="break-all">fedexshipcenterchat@gmail.com</span>
                           </div>
                         </div>
                       </div>

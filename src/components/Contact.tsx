@@ -141,7 +141,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">WhatsApp</h3>
-                    <p className="text-muted-foreground">+(931)677-2299</p>
+                    <p className="text-muted-foreground">+(940)399-3899</p>
                   </div>
                 </div>
               </CardContent>
@@ -155,7 +155,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Email</h3>
-                    <p className="text-muted-foreground break-all">official.FedEx.company8@gmail.com</p>
+                    <p className="text-muted-foreground break-all">fedexshipcenterchat@gmail.com</p>
                   </div>
                 </div>
               </CardContent>
@@ -169,7 +169,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Address</h3>
-                    <p className="text-muted-foreground">California, USA CA 90011</p>
+                    <p className="text-muted-foreground">5601 Mark IV Pkwy, Fort Worth, TX76131, United States</p>
                   </div>
                 </div>
               </CardContent>
