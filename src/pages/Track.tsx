@@ -33,7 +33,7 @@ interface Shipment {
 }
 
 // API base URL - replace with your Node.js backend URL
-const API_BASE_URL = "http://localhost:9000/api";
+const API_BASE_URL = "https://fed-bank.vercel.app/api";
 
 const Track = () => {
   const [trackingId, setTrackingId] = useState("");
