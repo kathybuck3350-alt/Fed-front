@@ -50,7 +50,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-primary-foreground/80">
               <li>WhatsApp: +(940)399-3899</li>
               <li className="break-all">Email: fedexshipcenterchat@gmail.com</li>
-              <li>5601 Mark IV Pkwy, Fort Worth, TX76131, United States</li>
+              <li>5601 Mark IV Pkwy, Fort Worth, TX 76131, United States</li>
             </ul>
           </div>
         </div>

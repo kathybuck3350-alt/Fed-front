@@ -169,7 +169,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Address</h3>
-                    <p className="text-muted-foreground">5601 Mark IV Pkwy, Fort Worth, TX76131, United States</p>
+                    <p className="text-muted-foreground">5601 Mark IV Pkwy, Fort Worth, TX 76131, United States</p>
                   </div>
                 </div>
               </CardContent>
