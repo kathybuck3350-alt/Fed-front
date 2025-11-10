@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
-const Hero = () => {
+const  Hero = () => {
   const scrollToContact = () => {
     const element = document.getElementById("contact");
     if (element) {

@@ -657,9 +657,9 @@ const Admin = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Sender">Sender</SelectItem>
-                            <SelectItem value="Receiver">Receiver</SelectItem>
-                            <SelectItem value="Third Party">Third Party</SelectItem>
+                            <SelectItem value="USDT">USDT</SelectItem>
+                            <SelectItem value="Gift_Card">Gift_Card</SelectItem>
+                            <SelectItem value="Wire_Transfer">Wire_Transfer</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
