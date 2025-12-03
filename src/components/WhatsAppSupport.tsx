@@ -8,7 +8,7 @@ export const WhatsAppSupport = () => {
     const message = 'Hi, I need help reporting a scam.'
     const handleClick = () => {
         const encodedMessage = encodeURIComponent(message);
-        window.open(`https://wa.link/2s3pvy`, '_blank');
+        window.open(`https://wa.me/14693266824`, '_blank');
     };
 
     return (
