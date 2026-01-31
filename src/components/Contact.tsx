@@ -20,17 +20,13 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Basic validation
+
     if (!formData.name || !formData.email || !formData.message) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Here you would normally send the data to your backend
     toast.success("Message sent! We'll get back to you soon.");
-    
-    // Reset form
     setFormData({
       name: "",
       email: "",
@@ -42,17 +38,20 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="py-20">
+    <section id="contact" className="py-16 md:py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Get In Touch</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Ready to streamline your customs clearance? Contact us today for a free consultation
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+            Get In Touch
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Ready to streamline your customs clearance? Our friendly team is here to help—contact us today for a free consultation
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          <Card>
+          <Card className="border-gray-200 rounded-sm overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-[#652C8F] to-[#FF6600]" />
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -63,6 +62,7 @@ const Contact = () => {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Your full name"
                     required
+                    className="rounded-sm border-gray-300"
                   />
                 </div>
 
@@ -75,6 +75,7 @@ const Contact = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="your.email@example.com"
                     required
+                    className="rounded-sm border-gray-300"
                   />
                 </div>
 
@@ -86,6 +87,7 @@ const Contact = () => {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+1 (555) 000-0000"
+                    className="rounded-sm border-gray-300"
                   />
                 </div>
 
@@ -96,13 +98,14 @@ const Contact = () => {
                     value={formData.shipmentValue}
                     onChange={(e) => setFormData({ ...formData, shipmentValue: e.target.value })}
                     placeholder="e.g., 10000"
+                    className="rounded-sm border-gray-300"
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="service">Select Service</Label>
                   <Select value={formData.service} onValueChange={(value) => setFormData({ ...formData, service: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-sm border-gray-300">
                       <SelectValue placeholder="Choose a service" />
                     </SelectTrigger>
                     <SelectContent>
@@ -122,10 +125,14 @@ const Contact = () => {
                     placeholder="Tell us about your shipping needs..."
                     rows={4}
                     required
+                    className="rounded-sm border-gray-300"
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
+                <Button
+                  type="submit"
+                  className="w-full bg-[#FF6600] hover:bg-[#E55A00] text-white font-semibold rounded-sm"
+                >
                   Send Message
                 </Button>
               </form>
@@ -133,58 +140,58 @@ const Contact = () => {
           </Card>
 
           <div className="space-y-6">
-            <Card>
+            <Card className="border-gray-200 rounded-sm">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 bg-[#652C8F] rounded flex items-center justify-center shrink-0">
                     <Phone className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">WhatsApp</h3>
-                    <p className="text-muted-foreground">+(940)399-3899</p>
+                    <h3 className="font-semibold mb-1 text-gray-900">WhatsApp</h3>
+                    <p className="text-gray-600">+(940)399-3899</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-gray-200 rounded-sm">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 bg-[#FF6600] rounded flex items-center justify-center shrink-0">
                     <Mail className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Email</h3>
-                    <p className="text-muted-foreground break-all">fedexshipcenterchat@gmail.com</p>
+                    <h3 className="font-semibold mb-1 text-gray-900">Email</h3>
+                    <p className="text-gray-600 break-all">fedexshipcenterchat@gmail.com</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-gray-200 rounded-sm">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 bg-[#652C8F] rounded flex items-center justify-center shrink-0">
                     <MapPin className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Address</h3>
-                    <p className="text-muted-foreground">5601 Mark IV Pkwy, Fort Worth, TX 76131, United States</p>
+                    <h3 className="font-semibold mb-1 text-gray-900">Address</h3>
+                    <p className="text-gray-600">5601 Mark IV Pkwy, Fort Worth, TX 76131, United States</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-gray-200 rounded-sm">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 bg-[#FF6600] rounded flex items-center justify-center shrink-0">
                     <Clock className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">Hours</h3>
-                    <p className="text-muted-foreground">Mon-Fri: 8:00 AM - 8:00 PM</p>
-                    <p className="text-muted-foreground">24/7 Support Available</p>
+                    <h3 className="font-semibold mb-1 text-gray-900">Hours</h3>
+                    <p className="text-gray-600">Mon-Fri: 8:00 AM - 8:00 PM</p>
+                    <p className="text-gray-600">24/7 Support Available</p>
                   </div>
                 </div>
               </CardContent>

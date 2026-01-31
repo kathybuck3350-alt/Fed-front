@@ -1,7 +1,13 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, ArrowRight } from "lucide-react";
 
-const  Hero = () => {
+const Hero = () => {
+  const [trackingId, setTrackingId] = useState("");
+  const navigate = useNavigate();
+
   const scrollToContact = () => {
     const element = document.getElementById("contact");
     if (element) {
@@ -9,63 +15,68 @@ const  Hero = () => {
     }
   };
 
-  return (
-    <section id="home" className="relative py-20 md:py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5"></div>
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-block px-4 py-2 bg-primary/10 rounded-full mb-6 animate-fade-in">
-            <span className="text-primary font-semibold text-sm">Trusted by 10,000+ Businesses</span>
-          </div>
-          
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            Professional US Customs Clearance &{" "}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Shipping Solutions
-            </span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Fast, reliable, and compliant customs clearance services for shipments valued from $9,550 USDT and above. 
-            Get your goods through customs quickly with our expert team.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              onClick={scrollToContact}
-              className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-primary-dark hover:opacity-90"
-            >
-              Get Quote <ArrowRight className="ml-2" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })}
-              className="text-lg px-8 py-6"
-            >
-              Learn More
-            </Button>
-          </div>
+  const handleTrack = (e: React.FormEvent) => {
+    e.preventDefault();
+    const id = trackingId.trim();
+    if (id) {
+      navigate(`/track?tracking=${encodeURIComponent(id)}`);
+    }
+  };
 
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-1">15+</div>
-              <div className="text-sm text-muted-foreground">Years Experience</div>
+  return (
+    <section id="home" className="relative min-h-[420px] md:min-h-[480px] flex items-center overflow-hidden">
+      {/* Background image - FedEx aircraft */}
+      <div className="absolute inset-0">
+        <img
+          src="/assets/fedex-aircraft.jpeg"
+          alt="FedEx aircraft"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#652C8F]/90 via-[#652C8F]/80 to-[#652C8F]/60" />
+      </div>
+
+      <div className="container mx-auto px-4 relative z-10 py-12">
+        <div className="max-w-3xl">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+            Track Your Shipment
+          </h1>
+          <p className="text-white/90 text-lg mb-8">
+            Enter your tracking number to get real-time status updates
+          </p>
+
+          {/* FedEx-style tracking input */}
+          <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+            <div className="flex-1 relative">
+              <Input
+                type="text"
+                placeholder="Enter tracking number (e.g., SCS-20251102-330)"
+                value={trackingId}
+                onChange={(e) => setTrackingId(e.target.value)}
+                className="h-14 px-4 text-base bg-white border-0 rounded-sm placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-[#FF6600]"
+              />
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-1">10K+</div>
-              <div className="text-sm text-muted-foreground">Shipments Cleared</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-1">99.8%</div>
-              <div className="text-sm text-muted-foreground">Success Rate</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-1">24/7</div>
-              <div className="text-sm text-muted-foreground">Support</div>
-            </div>
+            <Button
+              type="submit"
+              className="h-14 px-8 bg-[#FF6600] hover:bg-[#E55A00] text-white font-semibold rounded-sm text-base whitespace-nowrap"
+            >
+              <Search className="mr-2 h-5 w-5" />
+              Track
+            </Button>
+          </form>
+
+          <div className="mt-8 flex flex-wrap gap-4">
+            <button
+              onClick={scrollToContact}
+              className="inline-flex items-center text-white/90 hover:text-white font-medium transition-colors"
+            >
+              Get Quote <ArrowRight className="ml-1 h-4 w-4" />
+            </button>
+            <a
+              href="#services"
+              className="inline-flex items-center text-white/90 hover:text-white font-medium transition-colors"
+            >
+              Our Services
+            </a>
           </div>
         </div>
       </div>

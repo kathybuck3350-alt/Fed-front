@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,9 +70,38 @@ interface Shipment {
 const API_BASE_URL = "https://fed-bank.vercel.app/api";
 
 const Track = () => {
+  const [searchParams] = useSearchParams();
   const [trackingId, setTrackingId] = useState("");
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Auto-track when navigating with ?tracking= query param (e.g. from Hero banner)
+  useEffect(() => {
+    const id = searchParams.get("tracking");
+    if (id && id.trim()) {
+      setTrackingId(id.trim());
+      const trackFromParam = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(`${API_BASE_URL}/shipments/track/${id.trim()}`);
+          if (response.ok) {
+            const data = await response.json();
+            setShipment(data.shipment);
+            toast.success("Shipment found!");
+          } else if (response.status === 404) {
+            toast.error("Tracking ID not found");
+          } else {
+            toast.error("Error fetching shipment details");
+          }
+        } catch {
+          toast.error("An error occurred while tracking your shipment");
+        } finally {
+          setLoading(false);
+        }
+      };
+      trackFromParam();
+    }
+  }, [searchParams]);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,20 +171,23 @@ const Track = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900/30">
       <SecondNavbar />
-      
+
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold mb-4">Track Your Shipment</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-4xl font-bold mb-4 text-gray-900">
+                Track Your Shipment
+              </h1>
+              <p className="text-gray-600">
                 Enter your tracking ID to view real-time shipment status
               </p>
             </div>
 
-            <Card className="mb-8">
+            <Card className="mb-8 border-gray-200 rounded-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-[#652C8F] to-[#FF6600]" />
               <CardContent className="pt-6">
                 <form onSubmit={handleTrack} className="flex gap-4">
                   <div className="flex-1">
@@ -164,9 +197,14 @@ const Track = () => {
                       placeholder="Enter tracking ID (e.g., SCS-20251102-330)"
                       value={trackingId}
                       onChange={(e) => setTrackingId(e.target.value)}
+                      className="rounded-sm"
                     />
                   </div>
-                  <Button type="submit" disabled={loading}>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-[#FF6600] hover:bg-[#E55A00] text-white font-semibold rounded-sm"
+                  >
                     <Search className="mr-2 h-4 w-4" />
                     {loading ? "Tracking..." : "Track"}
                   </Button>
@@ -177,15 +215,15 @@ const Track = () => {
             {shipment && (
               <div className="space-y-6">
                 {/* Main Shipment Status Card */}
-                <Card className="border-l-4 border-l-primary">
+                <Card className="border-l-4 border-l-[#652C8F] rounded-sm border-gray-200">
                   <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
-                          <Package className="h-6 w-6 text-primary" />
-                          <h2 className="text-2xl font-bold">{shipment.tracking_id}</h2>
+                          <Package className="h-6 w-6 text-[#652C8F]" />
+                          <h2 className="text-2xl font-bold text-gray-900">{shipment.tracking_id}</h2>
                         </div>
-                        <p className="text-muted-foreground">
+                        <p className="text-gray-600">
                           {shipment.type_of_shipment} • {shipment.weight} kg • {shipment.product}
                         </p>
                       </div>
@@ -243,8 +281,8 @@ const Track = () => {
 
                         <div>
                           <div className="text-sm text-muted-foreground">Shipment Value</div>
-                          <div className="font-semibold text-lg flex items-center gap-1">
-                            <DollarSign className="h-5 w-5 text-primary" />
+                            <div className="font-semibold text-lg flex items-center gap-1 text-[#652C8F]">
+                            <DollarSign className="h-5 w-5" />
                             {shipment.shipment_value.toLocaleString()} USDT
                           </div>
                         </div>
@@ -282,12 +320,12 @@ const Track = () => {
                           <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
                           <div>
                             <div className="text-sm text-muted-foreground">Current Location</div>
-                            <div className="font-semibold text-accent">{shipment.current_location}</div>
+                            <div className="font-semibold text-[#FF6600]">{shipment.current_location}</div>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-3">
-                          <Calendar className="h-5 w-5 text-primary mt-0.5" />
+                          <Calendar className="h-5 w-5 text-[#652C8F] mt-0.5" />
                           <div>
                             <div className="text-sm text-muted-foreground">Estimated Delivery</div>
                             <div className="font-semibold">{formatDate(shipment.estimated_delivery)}</div>
@@ -300,7 +338,7 @@ const Track = () => {
                             <div className="text-sm text-muted-foreground">Customs Status</div>
                             <Badge 
                               variant={shipment.customs_status === "Cleared" ? "default" : "secondary"}
-                              className="mt-1"
+                              className={`mt-1 ${shipment.customs_status === "Cleared" ? "bg-[#652C8F]" : ""}`}
                             >
                               {shipment.customs_status}
                             </Badge>
@@ -312,10 +350,10 @@ const Track = () => {
                 </div>
 
                 {/* Receiver Details */}
-                <Card>
+                <Card className="rounded-sm border-gray-200">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-gray-900">
+                      <User className="h-5 w-5 text-[#652C8F]" />
                       Receiver Details
                     </CardTitle>
                   </CardHeader>
@@ -369,13 +407,13 @@ const Track = () => {
                           <div className="space-y-2 pt-2">
                             {shipment.receiver_details.phone && (
                               <div className="flex items-center gap-2 text-sm">
-                                <Phone className="h-4 w-4 text-primary" />
+                                <Phone className="h-4 w-4 text-[#652C8F]" />
                                 <span>{shipment.receiver_details.phone}</span>
                               </div>
                             )}
                             {shipment.receiver_details.email && (
                               <div className="flex items-center gap-2 text-sm">
-                                <Mail className="h-4 w-4 text-primary" />
+                                <Mail className="h-4 w-4 text-[#652C8F]" />
                                 <span className="break-all">{shipment.receiver_details.email}</span>
                               </div>
                             )}
@@ -387,10 +425,10 @@ const Track = () => {
                 </Card>
 
                 {/* Shipment Timeline */}
-                <Card>
+                <Card className="rounded-sm border-gray-200">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Truck className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-gray-900">
+                      <Truck className="h-5 w-5 text-[#652C8F]" />
                       Shipment Timeline
                     </CardTitle>
                   </CardHeader>
@@ -402,8 +440,8 @@ const Track = () => {
                             <div
                               className={`w-4 h-4 rounded-full border-2 ${
                                 event.completed 
-                                  ? "bg-primary border-primary" 
-                                  : "bg-muted border-muted-foreground"
+                                  ? "bg-[#652C8F] border-[#652C8F]" 
+                                  : "bg-gray-200 border-gray-300"
                               }`}
                             />
                             {index < shipment.progress.length - 1 && (
@@ -443,35 +481,35 @@ const Track = () => {
 
                 {/* Additional Information Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="bg-gradient-to-r from-primary/10 to-accent/10">
+                  <Card className="bg-gradient-to-r from-[#652C8F]/10 to-[#FF6600]/10  rounded-sm border-[#652C8F]/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-4 mb-4">
-                        <Bell className="h-6 w-6 text-primary" />
+                        <Bell className="h-6 w-6 text-[#652C8F]" />
                         <h3 className="font-semibold text-lg">Stay Updated</h3>
                       </div>
                       <p className="text-muted-foreground mb-4">
                         Enable notifications to receive real-time updates about your shipment status.
                       </p>
-                      <Button>Enable Notifications</Button>
+                      <Button className="bg-[#FF6600] hover:bg-[#E55A00] text-white rounded-sm">Enable Notifications</Button>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="rounded-sm border-gray-200">
                     <CardHeader>
-                      <CardTitle>Need Help?</CardTitle>
+                      <CardTitle className="text-gray-900">Need Help?</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        <p className="text-muted-foreground">
+                        <p className="text-gray-600">
                           If you have any questions about your shipment, our support team is here to help.
                         </p>
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4 text-primary" />
+                            <Phone className="h-4 w-4 text-[#652C8F]" />
                             <span>+(940)399-3899</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-4 w-4 text-primary" />
+                            <Mail className="h-4 w-4 text-[#652C8F]" />
                             <span className="break-all">fedexshipcenterchat@gmail.com</span>
                           </div>
                         </div>

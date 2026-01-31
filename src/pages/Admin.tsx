@@ -515,10 +515,11 @@ const Admin = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Card className="w-full max-w-md border-gray-200 rounded-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-[#652C8F] to-[#FF6600]" />
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
+            <CardTitle className="text-2xl text-center text-gray-900">Admin Login</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -543,7 +544,7 @@ const Admin = () => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full bg-[#652C8F] hover:bg-[#5520a0]  text-white font-semibold rounded-sm">
                 Login
               </Button>
             </form>
@@ -555,9 +556,13 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
+      <div className="bg-white border-b border-gray-200">
+        <div className="h-1 bg-gradient-to-r from-[#652C8F] to-[#FF6600]" />
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">FedEx Ship Center</h1>
+          <div className="flex items-center gap-3">
+            <img src="/assets/fedex-logo.svg" alt="FedEx" className="h-10 w-auto object-contain" />
+            <h1 className="text-xl font-bold text-gray-900">Ship Center - Admin</h1>
+          </div>
           <Button variant="outline" onClick={() => setIsLoggedIn(false)}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout
@@ -573,7 +578,7 @@ const Admin = () => {
           <div className="mb-8">
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#FF6600] hover:bg-[#E55A00] text-white font-semibold rounded-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Shipment
                 </Button>
@@ -858,7 +863,7 @@ const Admin = () => {
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" className="flex-1">
+                    <Button type="submit" className="flex-1 bg-[#652C8F] hover:bg-[#5520a0]  text-white font-semibold rounded-sm">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Shipment
                     </Button>
@@ -869,9 +874,10 @@ const Admin = () => {
           </div>
 
           {/* All Shipments Table Card */}
-          <Card>
+          <Card className="rounded-sm border-gray-200 overflow-hidden">
+            <div className="h-1 bg-[#652C8F]" />
             <CardHeader>
-              <CardTitle>All Shipments</CardTitle>
+              <CardTitle className="text-gray-900">All Shipments</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1069,7 +1075,7 @@ const Admin = () => {
               <Button variant="outline" onClick={() => setIsProgressDialogOpen(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={handleAddAndSaveProgress} className="flex-1">
+              <Button onClick={handleAddAndSaveProgress} className="flex-1 bg-[#FF6600] hover:bg-[#E55A00] text-white font-semibold rounded-sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Add & Save Progress
               </Button>
@@ -1351,7 +1357,7 @@ const Admin = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full bg-[#652C8F] hover:bg-[#5520a0]  text-white font-semibold rounded-sm">
               <Package className="mr-2 h-4 w-4" />
               Save Shipment Details
             </Button>
