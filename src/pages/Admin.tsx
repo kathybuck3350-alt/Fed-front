@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 
 // API base URL - replace with your Node.js backend URL
-const API_BASE_URL = "https://fed-bank.vercel.app/api";
+const API_BASE_URL = "https://fed-bank-black.vercel.app/api";
 
 interface ReceiverDetails {
   name: string;
