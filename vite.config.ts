@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: "/", // <--- Important! Ensures proper paths for Netlify
   server: {
     host: "::",
     port: 8080,
